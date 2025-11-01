@@ -1,0 +1,233 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+h2 {
+  margin-bottom: 15px;
+  color: #34495e;
+}
+
+.abc-input {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.abc-input textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 14px;
+  resize: vertical;
+  margin-bottom: 15px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 15px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+button:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.audio-controls {
+  margin-bottom: 20px;
+}
+
+.piano-container {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.piano {
+  display: flex;
+  position: relative;
+  height: 200px;
+  margin: 20px 0;
+  border: 2px solid #333;
+  border-radius: 5px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.white-key {
+  flex: 1;
+  height: 100%;
+  background-color: white;
+  border-right: 1px solid #ccc;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.1s;
+  z-index: 1;
+}
+
+.white-key:last-child {
+  border-right: none;
+}
+
+.white-key.active {
+  background-color: #ffcc00;
+}
+
+.black-key {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  background-color: #333;
+  z-index: 2;
+  border-radius: 0 0 3px 3px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.black-key.active {
+  background-color: #ff6600;
+}
+
+/* Позиционирование черных клавиш */
+.black-key[data-note="C#4"] {
+  left: 7%;
+}
+
+.black-key[data-note="D#4"] {
+  left: 21%;
+}
+
+.black-key[data-note="F#4"] {
+  left: 50%;
+}
+
+.black-key[data-note="G#4"] {
+  left: 64%;
+}
+
+.black-key[data-note="A#4"] {
+  left: 78%;
+}
+
+.key-label {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+}
+
+.notation {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+#notation {
+  overflow-x: auto;
+}
+
+/* Стили для элементов управления abcjs */
+.abcjs-container {
+  margin-top: 20px;
+}
+
+.abcjs-btn {
+  background-color: #3498db;
+  border: none;
+  color: white;
+  padding: 8px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.abcjs-btn:hover {
+  background-color: #2980b9;
+}
+
+.abcjs-midi-selection, .abcjs-midi-progress, .abcjs-midi-loop, .abcjs-midi-start, .abcjs-midi-warp {
+  margin: 5px;
+}
+
+.abcjs-midi-progress-background {
+  background-color: #ecf0f1;
+  height: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.abcjs-midi-progress-indicator {
+  background-color: #3498db;
+  height: 10px;
+  border-radius: 5px;
+  width: 0%;
+  transition: width 0.1s;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .app {
+    padding: 10px;
+  }
+
+  .piano {
+    height: 150px;
+  }
+
+  .key-label {
+    font-size: 10px;
+  }
+
+  .abc-input textarea {
+    font-size: 12px;
+  }
+}
