@@ -73,6 +73,10 @@ button:disabled {
 }
 
 .audio-controls {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
 }
 
@@ -165,15 +169,37 @@ button:disabled {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 #notation {
   overflow-x: auto;
 }
 
-/* Стили для элементов управления abcjs */
+.examples {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.example-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.example-buttons button {
+  background-color: #27ae60;
+}
+
+.example-buttons button:hover {
+  background-color: #219a52;
+}
+
+/* Стили для abcjs audio controls */
 .abcjs-container {
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .abcjs-btn {
@@ -188,14 +214,25 @@ button:disabled {
   margin: 4px 2px;
   cursor: pointer;
   border-radius: 4px;
+  transition: background-color 0.3s;
 }
 
 .abcjs-btn:hover {
   background-color: #2980b9;
 }
 
-.abcjs-midi-selection, .abcjs-midi-progress, .abcjs-midi-loop, .abcjs-midi-start, .abcjs-midi-warp {
+.abcjs-btn:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}
+
+.abcjs-midi-selection,
+.abcjs-midi-progress,
+.abcjs-midi-loop,
+.abcjs-midi-start,
+.abcjs-midi-warp {
   margin: 5px;
+  display: inline-block;
 }
 
 .abcjs-midi-progress-background {
@@ -203,6 +240,7 @@ button:disabled {
   height: 10px;
   border-radius: 5px;
   margin: 10px 0;
+  width: 100%;
 }
 
 .abcjs-midi-progress-indicator {
@@ -211,6 +249,11 @@ button:disabled {
   border-radius: 5px;
   width: 0%;
   transition: width 0.1s;
+}
+
+.abcjs-cursor {
+  stroke: red;
+  stroke-width: 2px;
 }
 
 /* Адаптивность */
@@ -230,4 +273,63 @@ button:disabled {
   .abc-input textarea {
     font-size: 12px;
   }
+
+  .example-buttons {
+    flex-direction: column;
+  }
+
+  .example-buttons button {
+    width: 100%;
+  }
+}
+
+.abcjs-midi-stop, .abcjs-midi-pause {
+  background-color: #e74c3c !important;
+}
+
+.abcjs-midi-stop:hover, .abcjs-midi-pause:hover {
+  background-color: #c0392b !important;
+}
+
+.abcjs-midi-play, .abcjs-midi-start {
+  background-color: #27ae60 !important;
+}
+
+.abcjs-midi-play:hover, .abcjs-midi-start:hover {
+  background-color: #219a52 !important;
+}
+
+.abcjs-midi-reset, .abcjs-midi-restart {
+  background-color: #f39c12 !important;
+}
+
+.abcjs-midi-reset:hover, .abcjs-midi-restart:hover {
+  background-color: #d35400 !important;
+}
+
+/* Стили для состояния воспроизведения */
+.abcjs-playing {
+  opacity: 0.8;
+}
+
+/* Улучшенные стили для активных клавиш */
+.white-key.active {
+  background: linear-gradient(to bottom, #ffcc00, #ffaa00);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.black-key.active {
+  background: linear-gradient(to bottom, #ff6600, #cc5500);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+/* Анимация для активных клавиш */
+@keyframes keyPress {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.white-key.active, .black-key.active {
+  animation: keyPress 0.3s ease;
 }

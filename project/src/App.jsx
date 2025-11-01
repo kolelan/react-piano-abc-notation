@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 import abcjs from 'abcjs'
+import 'abcjs/abcjs-audio.css'
 
 function App() {
     const [abcText, setAbcText] = useState(`X:1
@@ -19,80 +20,177 @@ C C G G | A A G2 | F F E E | D D C2 | G G F F | E E D2 | G G F F | E E D2 | C C 
 
     // Инициализация аудиоконтекста
     useEffect(() => {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+        // Создаем аудиоконтекст только при взаимодействии пользователя
+        const initAudioContext = () => {
+            if (!audioContextRef.current) {
+                audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+            }
+        }
+
+        // Добавляем обработчик для инициализации аудиоконтекста при первом взаимодействии
+        document.addEventListener('click', initAudioContext, { once: true })
+
         return () => {
             if (audioContextRef.current) {
                 audioContextRef.current.close()
             }
+            // Останавливаем воспроизведение при размонтировании
+            stopPlayback();
         }
     }, [])
 
     // Функция для воспроизведения ABC нотации
-    const playABC = () => {
+    const playABC = async () => {
         if (!abcText.trim()) return
+
+        // Инициализируем аудиоконтекст если еще не инициализирован
+        if (!audioContextRef.current) {
+            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+        }
 
         setIsPlaying(true)
         setActiveNotes([])
 
         // Останавливаем предыдущее воспроизведение
-        if (synthControlRef.current) {
-            synthControlRef.current.stop()
+        stopPlayback();
+
+        // Очищаем предыдущую нотацию
+        const notationElement = document.getElementById('notation')
+        if (notationElement) {
+            notationElement.innerHTML = ''
+        }
+
+        // Очищаем предыдущие элементы управления
+        const audioControl = document.getElementById('audio-control')
+        if (audioControl) {
+            audioControl.innerHTML = ''
         }
 
         // Создаем визуальное представление
-        const visualObj = abcjs.renderAbc("notation", abcText)[0]
-        visualObjRef.current = visualObj
+        try {
+            const visualObj = abcjs.renderAbc("notation", abcText)[0]
+            visualObjRef.current = visualObj
 
-        // Создаем курсор
-        cursorRef.current = abcjs.TimingCallbacks(visualObj, {
-            // Обработка активных нот
-            eventCallback: function(event) {
-                if (event.measureStart && event.left === null) return
+            // Создаем курсор
+            cursorRef.current = new abcjs.TimingCallbacks(visualObj, {
+                // Обработка активных нот
+                eventCallback: function(event) {
+                    if (event.measureStart && event.left === null) return
 
-                // Получаем активные ноты в текущий момент
-                const notes = []
-                if (event.midi) {
-                    if (Array.isArray(event.midi)) {
-                        notes.push(...event.midi)
-                    } else {
-                        notes.push(event.midi)
+                    // Получаем активные ноты в текущий момент
+                    const notes = []
+                    if (event.midi) {
+                        if (Array.isArray(event.midi)) {
+                            notes.push(...event.midi)
+                        } else {
+                            notes.push(event.midi)
+                        }
                     }
+
+                    setActiveNotes(notes)
+                }
+            })
+
+            // Создаем контроллер синтезатора
+            synthControlRef.current = new abcjs.synth.SynthController()
+
+            // Загружаем контроллер в DOM элемент
+            synthControlRef.current.load("#audio-control", cursorRef.current, {
+                displayLoop: true,
+                displayRestart: true,
+                displayPlay: true,
+                displayProgress: true,
+                displayWarp: true
+            })
+
+            // Устанавливаем мелодию и воспроизводим
+            await synthControlRef.current.setTune(visualObj, false, {
+                chordsOff: false,
+                program: 0, // Акустическое фортепиано
+                midiTranspose: 0,
+                velocity: 0.8
+            })
+
+            console.log("Tune loaded successfully")
+
+            // Добавляем обработчики событий
+            if (synthControlRef.current) {
+                // Обработка завершения воспроизведения
+                const audioControlElement = document.getElementById('audio-control')
+                if (audioControlElement) {
+                    // Слушаем событие окончания воспроизведения
+                    audioControlElement.addEventListener('ended', () => {
+                        setIsPlaying(false)
+                        setActiveNotes([])
+                    })
+
+                    // Слушаем событие остановки
+                    audioControlElement.addEventListener('stop', () => {
+                        setIsPlaying(false)
+                        setActiveNotes([])
+                    })
                 }
 
-                setActiveNotes(notes)
+                // Запускаем воспроизведение
+                const playButton = audioControlElement?.querySelector('.abcjs-btn.abcjs-midi-start')
+                if (playButton) {
+                    playButton.click()
+                }
             }
-        })
 
-        // Воспроизводим музыку
-        synthControlRef.current = new abcjs.synth.SynthController()
-        synthControlRef.current.load("#audio", cursorRef.current, {
-            displayLoop: true,
-            displayRestart: true,
-            displayPlay: true,
-            displayProgress: true,
-            displayWarp: true
-        })
-
-        synthControlRef.current.setTune(visualObj, false, {
-            chordsOff: false,
-            program: 0, // Акустическое фортепиано
-        }).then(() => {
-            synthControlRef.current.play()
-        })
-
-        // Обработка завершения воспроизведения
-        synthControlRef.current.onended = () => {
+        } catch (error) {
+            console.error("Error rendering ABC notation:", error)
             setIsPlaying(false)
-            setActiveNotes([])
         }
     }
 
     // Остановка воспроизведения
     const stopPlayback = () => {
         if (synthControlRef.current) {
-            synthControlRef.current.stop()
-            setIsPlaying(false)
-            setActiveNotes([])
+            // В новой версии abcjs используем метод disable вместо stop
+            try {
+                // Находим кнопку остановки в элементах управления и кликаем на нее
+                const audioControlElement = document.getElementById('audio-control')
+                if (audioControlElement) {
+                    const stopButton = audioControlElement.querySelector('.abcjs-btn.abcjs-midi-stop')
+                    if (stopButton) {
+                        stopButton.click()
+                    } else {
+                        // Если кнопки остановки нет, ищем кнопку паузы
+                        const pauseButton = audioControlElement.querySelector('.abcjs-btn.abcjs-midi-pause')
+                        if (pauseButton) {
+                            pauseButton.click()
+                        }
+                    }
+                }
+
+                // Также останавливаем TimingCallbacks
+                if (cursorRef.current) {
+                    cursorRef.current.stop()
+                }
+            } catch (error) {
+                console.warn("Error stopping playback:", error)
+            }
+        }
+        setIsPlaying(false)
+        setActiveNotes([])
+    }
+
+    // Функция для принудительной остановки
+    const forceStopPlayback = () => {
+        if (cursorRef.current) {
+            cursorRef.current.stop()
+        }
+        setIsPlaying(false)
+        setActiveNotes([])
+
+        // Сбрасываем состояние элементов управления
+        const audioControlElement = document.getElementById('audio-control')
+        if (audioControlElement) {
+            const progressIndicator = audioControlElement.querySelector('.abcjs-midi-progress-indicator')
+            if (progressIndicator) {
+                progressIndicator.style.width = '0%'
+            }
         }
     }
 
@@ -138,14 +236,15 @@ C C G G | A A G2 | F F E E | D D C2 | G G F F | E E D2 | G G F F | E E D2 | C C 
                     <button onClick={playABC} disabled={isPlaying}>
                         {isPlaying ? 'Воспроизведение...' : 'Воспроизвести'}
                     </button>
-                    <button onClick={stopPlayback} disabled={!isPlaying}>
+                    <button onClick={forceStopPlayback}>
                         Остановить
                     </button>
                 </div>
             </div>
 
             <div className="audio-controls">
-                <div id="audio"></div>
+                <h2>Управление воспроизведением</h2>
+                <div id="audio-control"></div>
             </div>
 
             <div className="piano-container">
@@ -167,6 +266,38 @@ C C G G | A A G2 | F F E E | D D C2 | G G F F | E E D2 | G G F F | E E D2 | C C 
             <div className="notation">
                 <h2>Нотная запись</h2>
                 <div id="notation"></div>
+            </div>
+
+            <div className="examples">
+                <h2>Примеры мелодий</h2>
+                <div className="example-buttons">
+                    <button onClick={() => setAbcText(`X:1
+T:Twinkle Twinkle Little Star
+M:4/4
+L:1/4
+K:C
+C C G G | A A G2 | F F E E | D D C2 | G G F F | E E D2 | G G F F | E E D2 | C C G G | A A G2 | F F E E | D D C2`)}>
+                        Twinkle Twinkle
+                    </button>
+                    <button onClick={() => setAbcText(`X:1
+T:Mary Had a Little Lamb
+M:4/4
+L:1/4
+K:C
+E D C D | E E E2 | D D D2 | E G G2 |
+E D C D | E E E E | D D E D | C2 C2 |`)}>
+                        Mary Had a Little Lamb
+                    </button>
+                    <button onClick={() => setAbcText(`X:1
+T:Ode to Joy
+M:4/4
+L:1/4
+K:C
+E E F G | G F E D | C C D E | E D D2 |
+E E F G | G F E D | C C D E | D C C2 |`)}>
+                        Ode to Joy
+                    </button>
+                </div>
             </div>
         </div>
     )
